@@ -13,7 +13,7 @@
     - [With stable connection to Joyent server](#with-stable-connection-to-joyent-server)
     - [With unstable connection to Joyent server](#with-unstable-connection-to-joyent-server)
   - [Create the build zone](#create-the-build-zone)
-  - [Download Media Files](#download-media-files)
+  - [Download GHC Files](#download-ghc-files)
 
 ## Current Target Versions
 
@@ -253,7 +253,40 @@ Filesystem                                  Size  Used Avail Use% Mounted on
 zones/a088383f-7e61-cd6a-e654-f845c7545ae9   21G  623M   20G   3% /
 ```
 
-### Download Media Files
+Install build tools
+
+```bash
+[root@hswander ~]# pkgin update
+reading local summary...
+processing local summary...
+processing remote summary (https://pkgsrc.joyent.com/packages/SmartOS/2019Q4/x86_64/All)...
+pkg_summary.xz                                                                                                                                                    100% 2172KB  12.9KB/s   02:49
+[root@hswander ~]#
+[root@hswander ~]# while ! pkgin -y in build-essential ; do sleep 1; done
+calculating dependencies...done.
+
+3 packages to refresh:
+  libxml2-2.9.10nb1 nghttp2-1.40.0 curl-7.67.0
+
+40 packages to install:
+  libidn-1.34nb1 p5-Net-SSLeay-1.85nb2 p5-Net-LibIDN-0.12nb11 p5-Mozilla-CA-20180117nb2 p5-Socket6-0.29nb1 p5-Net-IP-1.26nb7 p5-MIME-Base64-3.15nb5 p5-IO-Socket-INET6-2.72nb5 p5-Digest-MD5-2.55nb4
+  mit-krb5-1.16.2nb3 p5-GSSAPI-0.28nb10 p5-Digest-HMAC-1.03nb9 p5-Net-Domain-TLD-1.75nb3 p5-Net-DNS-1.21 p5-IO-CaptureOutput-1.1105 p5-TimeDate-2.30nb6 p5-IO-Socket-SSL-2.060nb1
+  gettext-tools-0.20.1 pcre2-10.34 p5-Net-SMTP-SSL-1.04nb3 p5-MailTools-2.20nb2 p5-Error-0.17028 p5-Email-Valid-1.202nb3 p5-Authen-SASL-2.16nb7 expat-2.2.8 libtool-info-2.4.6
+  libtool-fortran-2.4.6nb1 libtool-base-2.4.6nb2 pkgconf-1.6.0 m4-1.4.18nb2 libtool-2.4.6 gmake-4.2.1nb1 git-docs-2.24.1 git-base-2.24.1 gcc7-7.4.0nb3 bison-3.4.2 binutils-2.26.1nb1
+  automake-1.16.1nb1 autoconf-2.69nb9 build-essential-1.3
+
+3 to refresh, 0 to upgrade, 40 to install
+140M to download, 386M to install
+ ...
+```
+
+> With an unstable connection to Joyent server, you'd be downloading some
+> large files from
+> https://pkgsrc.joyent.com/packages/SmartOS/2019Q4/x86_64/All/
+> manually and install them with `pkg_add` until the meta package
+> `build-essential` has all its dependencies (constitutes) installed.
+
+### Download GHC Files
 
 - GHC 7.6.3 binary package from pkgsrc
 
