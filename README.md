@@ -26,16 +26,16 @@
 
 > :: install 7.6.3 -> boot 7.10.3 -> boot 8.2.2 -> boot 8.4.4 -> boot 8.6.5 -> boot 8.8.2
 
-Why? GHC must be bootstrapped with an already working GHC, and each version has it own
-minimum version requirement, thus this path of bootstrapping.
+Why? To build GHC from source, it must be bootstrapped with an already working GHC, and
+each version comes with it own minimum version requirement, thus this path of bootstrapping.
 
 ## Space Occupation:
 
-Minimum of **60GB** disk space recommended for the `zones` pool of the SmartOS build (may
-be virtual) machine
+Minimum of **60GB** disk space is recommended for the `zones` pool of the **SmartOS**
+build machine (virtual or physical)
 
-- Build Stage: 20GB
-- Build Zone: 12.4GB
+- Build Stage: 20 GB
+- Build Zone: 12.4 GB
 
 ## Steps
 
@@ -45,7 +45,7 @@ be virtual) machine
 >
 > `-#` forces curl to show overall progress of downloading.
 
-You can just use `curl -OL xxx` instead if having a fast & stable connection.
+You can just use `curl -OL xxx` instead, if having a fast & stable connection.
 
 ### Prepare the build machine
 
@@ -61,24 +61,27 @@ while ! curl -# -C - -OL http://us-east.manta.joyent.com/Joyent_Dev/public/Smart
 
 #### Create the build virtual machine
 
-- With the downloaded `iso` mounted to its virtual cdrom
+- With the downloaded `iso` mounted through a virtual cdrom
+- And have the cdrom as the sole boot device
 
-As you may have knew, **SmartOS** is not to be booted from disks, the iso (cdrom)
-will continue serving as the boot device even after installed the os, so if the
-hypervisor (virt-manager in my case) ejects the cdrom after first boot / os install,
-make sure to have it connected manually, forever.
+As you may already know, **SmartOS** is not to be booted from storage disks, the iso
+(cdrom) will continue serving as the boot device even after installed the os, so if
+the hypervisor (virt-manager in my case) ejects the cdrom after first boot / os
+install, make sure to have it connected manually, forever.
 
 > note however if with KVM, you want to change the virtual cdrom's bus to `SCSI`,
-> as on one hand the default `IDE` bus boots the os noticably slower, on the other
+> as on one hand the default `IDE` bus boots the os noticeably slower, on the other
 > hand I've found the alternative `SATA` bus can induce high probability in crash
 > at boot, if you assign more than 1 cpu to the VM. You'd always want to use more
 > CPU cores to make the builds faster, so the best bet is to use `SCSI` attached
 > virtual cdrom for faster os boot as well.
 >
 > it seems `UEFI` boot with **OVMF** doesn't support boot from `SCSI` cdrom,
-> you'd better stick with the default `BIOS` boot option.
+> you'd better stick with the default `BIOS` boot option (not this selection is
+> only present at the time of vm creation with virt-manager, not to be changed
+> after vm created).
 
-- And with one or more virtual disks
+- And with one virtual disk or the better, more virtual disks each on a separate physical one
 
 > the more physical disks your smartos has, the better it performs, also true
 > for VMs, where you can create one virtual disk storage file on each physical
@@ -86,7 +89,7 @@ make sure to have it connected manually, forever.
 
 `VirtIO` bus recommended for virtual disks
 
-- The more CPUs and the more RAM the better
+- The more CPUs and the more RAM, the better
 
 > I used 8GB RAM and 6 virtual CPUs with type `host-passthrough` FYI.
 
@@ -100,7 +103,7 @@ Boot the virtual machine and follow the prompts, it's straight forward.
 
 ### Prepare the build stage
 
-It's a good idea to have a dedicated filesystem in the global zone for the
+It's a good idea to have a dedicated filesystem in the global zone as the
 build staging area, which is shared to a dedicated zone for the builds.
 
 ```bash
