@@ -1,0 +1,13 @@
+--- /opt/local/lib/ghc-7.6.3/settings	2019-07-01 17:07:44.000000000 +0000
++++ /opt/local/lib/ghc-7.6.3/settings.fixed	2020-01-31 16:10:38.197972059 +0000
+@@ -1,9 +1,9 @@
+ [("GCC extra via C opts", " -fwrapv"),
+  ("C compiler command", "gcc"),
+- ("C compiler flags", " -pipe -O2 -msave-args -mindirect-branch=thunk-inline -mfunction-return=thunk-inline -mindirect-branch-register -fno-aggressive-loop-optimizations -D_FORTIFY_SOURCE=2 -I/opt/local/include -I/usr/include -I/opt/local/include/ncurses -fno-stack-protector   -L/opt/local/gcc7/lib/gcc/x86_64-sun-solaris2.11/7.4.0 -Wl,-R/opt/local/gcc7/lib/gcc/x86_64-sun-solaris2.11/7.4.0  -L/opt/local/lib -L/usr/lib/amd64 -Wl,-R/usr/lib/amd64 -Wl,-R/opt/local/lib"),
++ ("C compiler flags", " -pipe -O2 -msave-args -mindirect-branch=thunk-inline -mfunction-return=thunk-inline -mindirect-branch-register -fno-aggressive-loop-optimizations -D_FORTIFY_SOURCE=2 -I/opt/local/include -I/usr/include -I/opt/local/include/ncurses -fno-stack-protector   -L/opt/local/gcc7/lib/gcc/x86_64-sun-solaris2.11/7.4.0 -Wl,-R/opt/local/gcc7/lib/gcc/x86_64-sun-solaris2.11/7.4.0  -L/opt/local/lib -L/usr/lib/amd64 -Wl,-R/usr/lib/amd64 -Wl,-R/opt/local/lib -lssp"),
+  ("ar command", "ar"),
+  ("ar flags", "q"),
+  ("ar supports at file", "YES"),
+  ("touch command", "touch"),
+  ("dllwrap command", "/bin/false"),
+  ("windres command", "/bin/false"),

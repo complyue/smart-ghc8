@@ -1,0 +1,16 @@
+{
+ "brand": "joyent",
+ "image_uuid": "e75c9d82-3156-11ea-9220-c7a6bb9f41b6",
+ "alias": "hswander",
+ "hostname": "hswander",
+ "max_physical_memory": 8196,
+ "quota": 20,
+ "resolvers": ["192.168.122.1", "223.5.5.5"],
+ "nics": [
+  {
+    "nic_tag": "admin",
+    "ip": "dhcp"
+  }
+ ]
+}
+

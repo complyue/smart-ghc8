@@ -1,0 +1,89 @@
+
+Backporting https://gitlab.haskell.org/ghc/ghc/merge_requests/2607/diffs
+
+--- StgCRun.c
++++ StgCRun.c.fixed
+@@ -26,12 +26,18 @@
+  *
+  * -------------------------------------------------------------------------- */
+ 
+ #include "PosixSource.h"
+ #include "ghcconfig.h"
+ 
++// Enable DWARF Call-Frame Information (used for stack unwinding) on Linux.
++// This is not supported on Darwin and SmartOS due to assembler differences.
++#if defined(linux_HOST_OS)
++#define ENABLE_UNWINDING
++#endif
++
+ #if defined(sparc_HOST_ARCH) || defined(USE_MINIINTERPRETER)
+ /* include Stg.h first because we want real machine regs in here: we
+  * have to get the value of R1 back from Stg land to C land intact.
+  */
+ 
+ /* We include windows.h very early, as on Win64 the CONTEXT type has
+@@ -402,12 +408,13 @@
+         "movq %%xmm12,112(%%rax)\n\t"
+         "movq %%xmm13,120(%%rax)\n\t"
+         "movq %%xmm14,128(%%rax)\n\t"
+         "movq %%xmm15,136(%%rax)\n\t"
+ #endif
+ 
++#if defined(ENABLE_UNWINDING)
+         /*
+          * Let the unwinder know where we saved the registers
+          * See Note [Unwinding foreign exports on x86-64].
+          */
+         ".cfi_def_cfa rsp, 0\n\t"
+         ".cfi_offset rbx, %c2\n\t"
+@@ -438,12 +445,14 @@
+ 
+ #if (RSP_DELTA >> 28) > 0
+ #error "RSP_DELTA too big"
+ #endif
+           "\n\t"
+ 
++#endif /* defined(ENABLE_UNWINDING) */
++
+         /*
+          * Set BaseReg
+          */
+ #if defined(mingw32_HOST_OS)
+         "movq %%rdx,%%r13\n\t"
+ #else
+@@ -509,14 +518,17 @@
+           "i"(RESERVED_C_STACK_BYTES + 8 /* rbp relative to cfa (rsp) */),
+           "i"(RESERVED_C_STACK_BYTES + 16 /* r12 relative to cfa (rsp) */),
+           "i"(RESERVED_C_STACK_BYTES + 24 /* r13 relative to cfa (rsp) */),
+           "i"(RESERVED_C_STACK_BYTES + 32 /* r14 relative to cfa (rsp) */),
+           "i"(RESERVED_C_STACK_BYTES + 40 /* r15 relative to cfa (rsp) */),
+           "i"(RESERVED_C_STACK_BYTES + STG_RUN_STACK_FRAME_SIZE
+-            /* rip relative to cfa */),
+-          "i"((RSP_DELTA & 127) | (128 * ((RSP_DELTA >> 7) > 0)))
++            /* rip relative to cfa */)
++
++#if defined(ENABLE_UNWINDING)
++
++          , "i"((RSP_DELTA & 127) | (128 * ((RSP_DELTA >> 7) > 0)))
+             /* signed LEB128-encoded delta from rsp - byte 1 */
+ #if (RSP_DELTA >> 7) > 0
+           , "i"(((RSP_DELTA >> 7) & 127) | (128 * ((RSP_DELTA >> 14) > 0)))
+             /* signed LEB128-encoded delta from rsp - byte 2 */
+ #endif
+ 
+@@ -527,12 +539,15 @@
+ 
+ #if (RSP_DELTA >> 21) > 0
+           , "i"(((RSP_DELTA >> 21) & 127) | (128 * ((RSP_DELTA >> 28) > 0)))
+             /* signed LEB128-encoded delta from rsp - byte 4 */
+ #endif
+ #undef RSP_DELTA
++
++#endif /* defined(ENABLE_UNWINDING) */
++
+         );
+         /*
+          * See Note [Stack Alignment on X86]
+          */
+ }
+ 
