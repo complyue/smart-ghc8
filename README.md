@@ -10,6 +10,9 @@
     - [Install smartos](#install-smartos)
   - [Prepare the build stage](#prepare-the-build-stage)
   - [Prepare the build zone](#prepare-the-build-zone)
+    - [With stable connection to Joyent server](#with-stable-connection-to-joyent-server)
+    - [With unstable connection to Joyent server](#with-unstable-connection-to-joyent-server)
+  - [Create the build zone](#create-the-build-zone)
   - [Download Media Files](#download-media-files)
 
 ## Current Target Versions
@@ -97,8 +100,8 @@ Boot the virtual machine and follow the prompts, it's straight forward.
 
 ### Prepare the build stage
 
-It's better to have a dedicated filesystem in the global zone for the build
-staging area, which is shared to a dedicated zone for the builds.
+It's a good idea to have a dedicated filesystem in the global zone for the
+build staging area, which is shared to a dedicated zone for the builds.
 
 ```bash
 # zfs create -o mountpoint=/build zones/build
@@ -106,30 +109,148 @@ staging area, which is shared to a dedicated zone for the builds.
 
 Clone and scp this repository to the build stage:
 
+> If you'd prefer install **git** to your GZ, you can clone directly there
+
 ```bash
-$ git clone 
+$ git clone https://gitlab.haskell.org/complyue/smart-ghc8
 $ scp -r smart-ghc8 root@192.168.122.69:/build/
 ```
 
 ### Prepare the build zone
 
-```bash
+#### With stable connection to Joyent server
 
+Things are straight forward and easy with a stable connection
+
+- Decide the best zone image to use
+
+```bash
+# imgadm avail name=base-64-lts
+UUID                                  NAME         VERSION  OS       TYPE          PUB
+c02a2044-c1bd-11e4-bd8c-dfc1db8b0182  base-64-lts  14.4.0   smartos  zone-dataset  2015-03-03
+24648664-e50c-11e4-be23-0349d0a5f3cf  base-64-lts  14.4.1   smartos  zone-dataset  2015-04-17
+b67492c2-055c-11e5-85d8-8b039ac981ec  base-64-lts  14.4.2   smartos  zone-dataset  2015-05-28
+96bcddda-beb7-11e5-af20-a3fb54c8ae29  base-64-lts  15.4.0   smartos  zone-dataset  2016-01-19
+088b97b0-e1a1-11e5-b895-9baa2086eb33  base-64-lts  15.4.1   smartos  zone-dataset  2016-03-04
+1f32508c-e6e9-11e6-bc05-8fea9e979940  base-64-lts  16.4.1   smartos  zone-dataset  2017-01-30
+390639d4-f146-11e7-9280-37ae5c6d53d4  base-64-lts  17.4.0   smartos  zone-dataset  2018-01-04
+c193a558-1d63-11e9-97cf-97bb3ee5c14f  base-64-lts  18.4.0   smartos  zone-dataset  2019-01-21
+e75c9d82-3156-11ea-9220-c7a6bb9f41b6  base-64-lts  19.4.0   smartos  zone-dataset  2020-01-07
 ```
 
+Record its uuid, at the time of this writing, that is
+`e75c9d82-3156-11ea-9220-c7a6bb9f41b6`, which is described as:
+
+> A 64-bit SmartOS image with just essential packages installed. Ideal for
+> users who are comfortable with setting up their own environment and tools.
+
+- Import the image locally
 
 ```bash
-
+# imgadm import e75c9d82-3156-11ea-9220-c7a6bb9f41b6
+Importing e75c9d82-3156-11ea-9220-c7a6bb9f41b6 (base-64-lts@19.4.0) from "https://images.joyent.com"
+Gather image e75c9d82-3156-11ea-9220-c7a6bb9f41b6 ancestry
+Must download and install 1 image (183.7 MiB)
+ ...
 ```
 
+#### With unstable connection to Joyent server
+
+If you are like me, with a rather unstable connection (even over VPN), do this:
+
+- In a browser (with proxy probably), goto:
+
+  - https://images.joyent.com/images?sort=published_at.desc&name=base-64-lts
+
+    to decide the best zone image to use, record its uuid
+
+- Download its manifest & filesystem payload separately:
 
 ```bash
-
+curl -o e75c9d82-3156-11ea-9220-c7a6bb9f41b6.manifest -L https://images.joyent.com/images/e75c9d82-3156-11ea-9220-c7a6bb9f41b6
+while ! curl -# -C - -o e75c9d82-3156-11ea-9220-c7a6bb9f41b6.gz -L https://images.joyent.com/images/e75c9d82-3156-11ea-9220-c7a6bb9f41b6/file ; do sleep 1; done
 ```
 
+- Install the image locally
 
 ```bash
+imgadm install -m e75c9d82-3156-11ea-9220-c7a6bb9f41b6.manifest -f e75c9d82-3156-11ea-9220-c7a6bb9f41b6.gz
+```
 
+### Create the build zone
+
+Modify `hswander.json` to your needs, and create the vm
+
+```bash
+[root@smartwander ~]# cd /build/smart-ghc8/
+[root@smartwander /build/smart-ghc8]# cat smartos-arts/hswander.json
+{
+ "brand": "joyent",
+ "image_uuid": "e75c9d82-3156-11ea-9220-c7a6bb9f41b6",
+ "alias": "hswander",
+ "hostname": "hswander",
+ "max_physical_memory": 8196,
+ "quota": 20,
+ "resolvers": ["192.168.122.1", "223.5.5.5"],
+ "nics": [
+  {
+    "nic_tag": "admin",
+    "ip": "dhcp"
+  }
+ ]
+}
+
+[root@smartwander /build/smart-ghc8]# vmadm create -f smartos-arts/hswander.json
+Successfully created VM a088383f-7e61-cd6a-e654-f845c7545ae9
+```
+
+Record the new vm's uuid, yours must be different than mine (which is
+`a088383f-7e61-cd6a-e654-f845c7545ae9`), make sure substitute it for command lines
+in following sections.
+
+Stop the vm and grant it access to the build stage
+
+> Note SmartOS is happily to tab-complete the vm's uuid and many other uuids
+> on the bash command line, will save you many typings (or copy&paste efforts)
+
+```bash
+[root@smartwander /build/smart-ghc8]# vmadm list
+UUID                                  TYPE  RAM      STATE             ALIAS
+a088383f-7e61-cd6a-e654-f845c7545ae9  OS    8196     running           hswander
+[root@smartwander /build/smart-ghc8]# vmadm stop a088383f-7e61-cd6a-e654-f845c7545ae9
+Successfully completed stop for VM a088383f-7e61-cd6a-e654-f845c7545ae9
+[root@smartwander /build/smart-ghc8]#
+[root@smartwander /build/smart-ghc8]# zonecfg -z a088383f-7e61-cd6a-e654-f845c7545ae9
+zonecfg:a088383f-7e61-cd6a-e654-f845c7545ae9> add fs
+zonecfg:a088383f-7e61-cd6a-e654-f845c7545ae9:fs> set type=lofs
+zonecfg:a088383f-7e61-cd6a-e654-f845c7545ae9:fs> set special=/build
+zonecfg:a088383f-7e61-cd6a-e654-f845c7545ae9:fs> set dir=/build
+zonecfg:a088383f-7e61-cd6a-e654-f845c7545ae9:fs> end
+zonecfg:a088383f-7e61-cd6a-e654-f845c7545ae9> commit
+zonecfg:a088383f-7e61-cd6a-e654-f845c7545ae9> exit
+[root@smartwander /build/smart-ghc8]#
+[root@smartwander /build/smart-ghc8]# vmadm start a088383f-7e61-cd6a-e654-f845c7545ae9
+Successfully started VM a088383f-7e61-cd6a-e654-f845c7545ae9
+```
+
+Login to the build zone
+
+```bash
+[root@smartwander /build/smart-ghc8]# zlogin a088383f-7e61-cd6a-e654-f845c7545ae9
+[Connected to zone 'a088383f-7e61-cd6a-e654-f845c7545ae9' pts/2]
+   __        .                   .
+ _|  |_      | .-. .  . .-. :--. |-
+|_    _|     ;|   ||  |(.-' |  | |
+  |__|   `--'  `-' `;-| `-' '  ' `-'
+                   /  ; Instance (base-64-lts 19.4.0)
+                   `-'  https://docs.joyent.com/images/smartos/base
+
+[root@hswander ~]# df -h /build
+Filesystem      Size  Used Avail Use% Mounted on
+-                48G  184M   48G   1% /build
+[root@hswander ~]# df -h /opt
+Filesystem                                  Size  Used Avail Use% Mounted on
+zones/a088383f-7e61-cd6a-e654-f845c7545ae9   21G  623M   20G   3% /
 ```
 
 ### Download Media Files
@@ -151,12 +272,4 @@ while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/8.2.2/ghc-8.2.2-src.
 while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/8.4.4/ghc-8.4.4-src.tar.xz ; do sleep 1; done
 while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/8.6.5/ghc-8.6.5-src.tar.xz ; do sleep 1; done
 while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/8.8.2/ghc-8.8.2-src.tar.xz ; do sleep 1; done
-```
-
-- (Optional if you have an unstable connection to joyent image server) Base 64 zone image
-
-```bash
-curl -o e75c9d82-3156-11ea-9220-c7a6bb9f41b6.manifest -L https://images.joyent.com/images/e75c9d82-3156-11ea-9220-c7a6bb9f41b6
-while ! curl -# -C - -o e75c9d82-3156-11ea-9220-c7a6bb9f41b6.gz -L https://images.joyent.com/images/e75c9d82-3156-11ea-9220-c7a6bb9f41b6/file ; do sleep 1; done
-imgadm install -m e75c9d82-3156-11ea-9220-c7a6bb9f41b6.manifest -f e75c9d82-3156-11ea-9220-c7a6bb9f41b6.gz
 ```
