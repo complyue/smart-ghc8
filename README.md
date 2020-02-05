@@ -16,6 +16,8 @@
   - [Download GHC Files](#download-ghc-files)
   - [Build GHC 7.10.3](#build-ghc-7103)
   - [Build GHC 8.2.2](#build-ghc-822)
+  - [Build GHC 8.4.4](#build-ghc-844)
+  - [Build GHC 8.6.5](#build-ghc-865)
 
 ## Current Target Versions
 
@@ -29,7 +31,7 @@
 > :: install 7.6.3 -> boot 7.10.3 -> boot 8.2.2 -> boot 8.4.4 -> boot 8.6.5 -> boot 8.8.2
 
 Why? To build GHC from source, it must be bootstrapped with an already working GHC, and
-each version comes with it own minimum version requirement, thus this path of bootstrapping.
+each version comes with its own minimum version requirement, thus this path of bootstrapping.
 
 ## Expected Space Occupation
 
@@ -513,4 +515,173 @@ to ignore the crash and go on as if normally.
 ```bash
 [root@hswander /build/ghc-8.2.2]# gmake -i -j6 2>&1 | tee /build/log-8.2.2-make-i.txt
  ...
+[root@hswander /build/ghc-8.2.2]# gmake install 2>&1 | tee /build/log-8.2.2-install.txt
+ ...
+[root@hswander /build/ghc-8.2.2]# /opt/local/ghc8.2.2/bin/ghci
+GHCi, version 8.2.2: http://www.haskell.org/ghc/  :? for help
+Prelude> 3*7
+21
+Prelude>
+Leaving GHCi.
+[root@hswander /build/ghc-8.2.2]#
+[root@hswander /build/ghc-8.2.2]# gmake binary-dist
+ ...
+[root@hswander /build/ghc-8.2.2]# du -h ghc-8.2.2-*
+110M    ghc-8.2.2-x86_64-unknown-solaris2.tar.xz
+```
+
+### Build GHC 8.4.4
+
+```bash
+[root@hswander /build]# gtar xf ghc-8.4.4-src.tar.xz
+[root@hswander /build]# patch -p0 < smart-ghc8/ghc-arts/ghc-8.4.4_rules_distdir-way-opts.mk.patch
+patching file ghc-8.4.4/rules/distdir-way-opts.mk
+[root@hswander /build]# cd ghc-8.4.4
+[root@hswander /build/ghc-8.4.4]# export PATH=/opt/local/ghc8.2.2/bin:$PATH
+[root@hswander /build/ghc-8.4.4]#
+[root@hswander /build/ghc-8.4.4]# cp /build/smart-ghc8/ghc-arts/mk_build.mk mk/build.mk
+[root@hswander /build/ghc-8.4.4]#
+[root@hswander /build/ghc-8.4.4]# ./configure --prefix /opt/local/ghc8.4.4 2>&1 | tee /build/log-8.4.4-configure.txt
+ ...
+----------------------------------------------------------------------
+Configure completed successfully.
+
+   Building GHC version  : 8.4.4
+          Git commit id  : 3bed09b2efd3df678c5d0752d2cdfba20d7c4863
+
+   Build platform        : x86_64-unknown-solaris2
+   Host platform         : x86_64-unknown-solaris2
+   Target platform       : x86_64-unknown-solaris2
+
+   Bootstrapping using   : /opt/local/ghc8.2.2/bin/ghc
+      which is version   : 8.2.2
+
+   Using (for bootstrapping) : gcc
+   Using gcc                 : gcc
+      which is version       : 7.4.0
+   Building a cross compiler : NO
+   Unregisterised            : NO
+   hs-cpp       : gcc
+   hs-cpp-flags : -E -undef -traditional
+   ar           : ar
+   ld           : ld
+   nm           : nm
+   libtool      : libtool
+   objdump      :
+   ranlib       : ranlib
+   windres      :
+   dllwrap      :
+   genlib       :
+   Happy        :  ()
+   Alex         :  ()
+   Perl         : /opt/local/bin/perl
+   sphinx-build :
+   xelatex      :
+
+   Using LLVM tools
+      clang :
+      llc   :
+      opt   :
+
+   HsColour was not found; documentation will not contain source links
+
+   Tools to build Sphinx HTML documentation available: NO
+   Tools to build Sphinx PDF documentation available: NO
+----------------------------------------------------------------------
+
+For a standard build of GHC (fully optimised with profiling), type (g)make.
+
+To make changes to the default build configuration, copy the file
+mk/build.mk.sample to mk/build.mk, and edit the settings in there.
+
+For more information on how to configure your GHC build, see
+   http://ghc.haskell.org/trac/ghc/wiki/Building
+
+[root@hswander /build/ghc-8.4.4]#
+[root@hswander /build/ghc-8.4.4]# gmake -j6 2>&1 | tee /build/log-8.4.4-make.txt
+ ...
+[root@hswander /build/ghc-8.4.4]# gmake install 2>&1 | tee /build/log-8.4.4-install.txt
+ ...
+[root@hswander /build/ghc-8.4.4]# /opt/local/ghc8.4.4/bin/ghci
+GHCi, version 8.4.4: http://www.haskell.org/ghc/  :? for help
+Prelude> 3*7
+21
+Prelude>
+Leaving GHCi.
+[root@hswander /build/ghc-8.4.4]#
+
+```
+
+### Build GHC 8.6.5
+
+```bash
+[root@hswander /build]# gtar xf ghc-8.6.5-src.tar.xz
+[root@hswander /build]# patch -p0 < smart-ghc8/ghc-arts/ghc-8.6.5_rules_distdir-way-opts.mk.patch
+[root@hswander /build]# patch -p0 < smart-ghc8/ghc-arts/ghc-8.6.5_rts_StgCRun.c.patch
+patching file ghc-8.6.5/rts/StgCRun.c
+[root@hswander /build]# cd ghc-8.6.5
+[root@hswander /build/ghc-8.6.5]#
+[root@hswander /build/ghc-8.6.5]# export PATH=/opt/local/ghc8.4.4/bin:$PATH
+[root@hswander /build/ghc-8.6.5]#
+[root@hswander /build/ghc-8.6.5]# ./configure --prefix /opt/local/ghc8.6.5 2>&1 | tee /build/log-8.6.5-configure.txt
+ ...
+----------------------------------------------------------------------
+Configure completed successfully.
+
+   Building GHC version  : 8.6.5
+          Git commit id  : 92b6a0237e0195cee4773de4b237951addd659d9
+
+   Build platform        : x86_64-unknown-solaris2
+   Host platform         : x86_64-unknown-solaris2
+   Target platform       : x86_64-unknown-solaris2
+
+   Bootstrapping using   : /opt/local/ghc8.4.4/bin/ghc
+      which is version   : 8.4.4
+
+   Using (for bootstrapping) : gcc
+   Using gcc                 : gcc
+      which is version       : 7.4.0
+   Building a cross compiler : NO
+   Unregisterised            : NO
+   hs-cpp       : gcc
+   hs-cpp-flags : -E -undef -traditional
+   ar           : ar
+   ld           : ld
+   nm           : nm
+   libtool      : libtool
+   objdump      : objdump
+   ranlib       : ranlib
+   windres      :
+   dllwrap      :
+   genlib       :
+   Happy        :  ()
+   Alex         :  ()
+   Perl         : /opt/local/bin/perl
+   sphinx-build :
+   xelatex      :
+
+   Using LLVM tools
+      clang :
+      llc   :
+      opt   :
+
+   HsColour was not found; documentation will not contain source links
+
+   Tools to build Sphinx HTML documentation available: NO
+   Tools to build Sphinx PDF documentation available: NO
+----------------------------------------------------------------------
+
+For a standard build of GHC (fully optimised with profiling), type (g)make.
+
+To make changes to the default build configuration, copy the file
+mk/build.mk.sample to mk/build.mk, and edit the settings in there.
+
+For more information on how to configure your GHC build, see
+   http://ghc.haskell.org/trac/ghc/wiki/Building
+
+[root@hswander /build/ghc-8.6.5]#
+[root@hswander /build/ghc-8.6.5]# gmake -j6 2>&1 | tee /build/log-8.6.5-make.txt
+ ...
+
+
 ```
