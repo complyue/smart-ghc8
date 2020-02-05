@@ -489,4 +489,28 @@ For more information on how to configure your GHC build, see
 
 [root@hswander /build/ghc-8.2.2]#
 [root@hswander /build/ghc-8.2.2]# gmake -j6 2>&1 | tee /build/log-8.2.2-make.txt
+ ...
+"/opt/local/ghc7.10.3/bin/ghc" -o utils/deriveConstants/dist/build/tmp/deriveConstants -hisuf hi -osuf  o -hcsuf hc -static  -H32m -O -Wall   -package-db libraries/bootstrapping.conf  -hide-all-packages -i -iutils/deriveConstants/. -iutils/deriveConstants/dist/build -Iutils/deriveConstants/dist/build -iutils/deriveConstants/dist/build/deriveConstants/autogen -Iutils/deriveConstants/dist/build/deriveConstants/autogen     -optP-include -optPutils/deriveConstants/dist/build/deriveConstants/autogen/cabal_macros.h -package-id base-4.8.2.0-22c9761e23a803f9ae779a2c20934380 -package-id containers-0.5.6.2-11bc7e6db5f4aab8daf90becef78c10e -package-id process-1.2.3.0-c30e4c640a5d1dd03e371e2b728281e1 -package-id filepath-1.4.0.0-f97d1e4aebfd7a03be6980454fe31d6e -XHaskell2010  -no-user-package-db -rtsopts       -odir utils/deriveConstants/dist/build -hidir utils/deriveConstants/dist/build -stubdir utils/deriveConstants/dist/build    -optl-Wl,-m64 -static  -H32m -O -Wall   -package-db libraries/bootstrapping.conf  -hide-all-packages -i -iutils/deriveConstants/. -iutils/deriveConstants/dist/build -Iutils/deriveConstants/dist/build -iutils/deriveConstants/dist/build/deriveConstants/autogen -Iutils/deriveConstants/dist/build/deriveConstants/autogen     -optP-include -optPutils/deriveConstants/dist/build/deriveConstants/autogen/cabal_macros.h -package-id base-4.8.2.0-22c9761e23a803f9ae779a2c20934380 -package-id containers-0.5.6.2-11bc7e6db5f4aab8daf90becef78c10e -package-id process-1.2.3.0-c30e4c640a5d1dd03e371e2b728281e1 -package-id filepath-1.4.0.0-f97d1e4aebfd7a03be6980454fe31d6e -XHaskell2010  -no-user-package-db -rtsopts       utils/deriveConstants/dist/build/Main.o
+"/opt/local/ghc7.10.3/bin/ghc" -hisuf hi -osuf  o -hcsuf hc -static  -H32m -O -Wall   -package-db libraries/bootstrapping.conf  -hide-all-packages -i -iutils/genprimopcode/. -iutils/genprimopcode/dist/build -Iutils/genprimopcode/dist/build -iutils/genprimopcode/dist/build/genprimopcode/autogen -Iutils/genprimopcode/dist/build/genprimopcode/autogen     -optP-include -optPutils/genprimopcode/dist/build/genprimopcode/autogen/cabal_macros.h -package-id base-4.8.2.0-22c9761e23a803f9ae779a2c20934380 -package-id array-0.5.1.0-960bf9ae8875cc30355e086f8853a049 -XHaskell2010  -no-user-package-db -rtsopts       -odir utils/genprimopcode/dist/build -hidir utils/genprimopcode/dist/build -stubdir utils/genprimopcode/dist/build    -c utils/genprimopcode/./Main.hs -o utils/genprimopcode/dist/build/Main.o
+ghc: fd:12: hGetContents: resource exhausted (Resource temporarily unavailable)
+libraries/hpc/ghc.mk:3: libraries/hpc/dist-boot/build/.depend-v.haskell: No such file or directory
+gmake[1]: *** [utils/deriveConstants/ghc.mk:19: utils/deriveConstants/dist/build/tmp/deriveConstants] Error 2
+gmake[1]: *** Deleting file 'utils/deriveConstants/dist/build/tmp/deriveConstants'
+gmake[1]: *** Waiting for unfinished jobs....
+gmake: *** [Makefile:125: all] Error 2
+[root@hswander /build/ghc-8.2.2]#
+```
+
+There's a strange error that `/opt/local/ghc7.10.3/bin/ghc` would crash after
+the target file can actually be generated corrrectly, we have to tell `make`
+to ignore the crash and go on as if normally.
+
+> This renders the finally built **ghc8.2.2** worrying to be used seriously,
+> but as we are only to bootstrap **ghc8.4.4** with it, and even the built
+> **ghc8.4.4** is only used to bootstrap **ghc8.6.5** or **ghc8.8.2**, let's
+> live with this concern without going too deep into it.
+
+```bash
+[root@hswander /build/ghc-8.2.2]# gmake -i -j6 2>&1 | tee /build/log-8.2.2-make-i.txt
+ ...
 ```
