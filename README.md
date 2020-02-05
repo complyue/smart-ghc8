@@ -14,6 +14,7 @@
     - [With unstable connection to Joyent server](#with-unstable-connection-to-joyent-server)
   - [Create the build zone](#create-the-build-zone)
   - [Download GHC Files](#download-ghc-files)
+  - [Build GHC 7.10.3](#build-ghc-7103)
 
 ## Current Target Versions
 
@@ -300,7 +301,7 @@ calculating dependencies...done.
 while ! curl -# -C - -OL https://pkgsrc.joyent.com/packages/SmartOS/2019Q2/x86_64/All/ghc-7.6.3nb13.tgz ; do sleep 1; done
 ```
 
-- GHC source tar balls
+- GHC source tarballs
 
 ```bash
 while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/7.10.3/ghc-7.10.3-src.tar.xz ; do sleep 1; done
@@ -308,4 +309,95 @@ while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/8.2.2/ghc-8.2.2-src.
 while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/8.4.4/ghc-8.4.4-src.tar.xz ; do sleep 1; done
 while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/8.6.5/ghc-8.6.5-src.tar.xz ; do sleep 1; done
 while ! curl -# -C - -OL https://downloads.haskell.org/~ghc/8.8.2/ghc-8.8.2-src.tar.xz ; do sleep 1; done
+```
+
+### Build GHC 7.10.3
+
+According to https://www.mail-archive.com/smartos-discuss@lists.smartos.org/msg05016.html
+, `ghc-7.6.3` needs a `-lssp` option added to its compiling command line;
+while `7.10.3` (and later versions during our builds) seems don't really
+need a similar patch.
+
+```bash
+[root@hswander /build]# patch /opt/local/lib/ghc-7.6.3/settings smart-ghc8/ghc-arts/ghc-7.6.3_settings.patch
+patching file /opt/local/lib/ghc-7.6.3/settings
+```
+
+> `gtar` can better guess the compression method applied to tarballs, easier
+> on command line.
+
+```bash
+[root@hswander /build]# gtar xf ghc-7.10.3-src.tar.xz
+[root@hswander /build]# cd ghc-7.10.3
+```
+
+> We have better sources for haddock of the stable versions, by not
+> building it, some time are saved and we don't bother to setup
+> the more complex dependencies for haddock on SmartOS.
+
+```bash
+[root@hswander /build/ghc-7.10.3]# echo 'HADDOCK_DOCS = NO' > mk/build.mk
+```
+
+I found `--disable-ld-override` not necessary, but we should specify
+`--prefix` to let the installing not target system locations.
+
+```
+[root@hswander /build/ghc-7.10.3]# ./configure --prefix /opt/local/ghc7.10.3 2>&1 | tee /build/log-7.10.3-configure.txt
+checking for gfind... /opt/local/bin/gfind
+ ...
+----------------------------------------------------------------------
+Configure completed successfully.
+
+   Building GHC version  : 7.10.3
+          Git commit id  : 97e7c293abbde5223d2bf0516f8969bdd1a9a7a2
+
+   Build platform        : x86_64-unknown-solaris2
+   Host platform         : x86_64-unknown-solaris2
+   Target platform       : x86_64-unknown-solaris2
+
+   Bootstrapping using   : /opt/local/bin/ghc
+      which is version   : 7.6.3
+
+   Using gcc                 : /opt/local/bin/gcc
+      which is version       : 7.4.0
+   Building a cross compiler : NO
+   cpp       : /opt/local/bin/gcc
+   cpp-flags : -E -undef -traditional
+   ld        : /usr/bin/ld
+   Happy     :  ()
+   Alex      :  ()
+   Perl      : /opt/local/bin/perl
+   dblatex   :
+   xsltproc  :
+
+   Using LLVM tools
+      llc   :
+      opt   :
+
+   HsColour was not found; documentation will not contain source links
+
+   Building DocBook HTML documentation : NO
+   Building DocBook PS documentation   : NO
+   Building DocBook PDF documentation  : NO
+----------------------------------------------------------------------
+
+For a standard build of GHC (fully optimised with profiling), type (g)make.
+
+To make changes to the default build configuration, copy the file
+mk/build.mk.sample to mk/build.mk, and edit the settings in there.
+
+For more information on how to configure your GHC build, see
+   http://ghc.haskell.org/trac/ghc/wiki/Building
+
+[root@hswander /build/ghc-7.10.3]#
+```
+
+> The number to `-j` should corresponding to how many virtual CPUs
+> allocated to the build vm.
+
+```bash
+[root@hswander /build/ghc-7.10.3]# gmake -j6
++ test -f mk/config.mk.old
+
 ```
