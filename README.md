@@ -1,8 +1,8 @@
 # Building GHC 8 on SmartOS x64
 
 - [Current Target Versions](#current-target-versions)
-- [Route:](#route)
-- [Space Occupation:](#space-occupation)
+- [The Route](#the-route)
+- [Expected Space Occupation](#expected-space-occupation)
 - [Steps](#steps)
   - [About downloading command line](#about-downloading-command-line)
   - [Prepare the build machine](#prepare-the-build-machine)
@@ -24,14 +24,14 @@
 - GHC:
   https://www.haskell.org/ghc/download_ghc_8_8_2.html
 
-## Route:
+## The Route
 
 > :: install 7.6.3 -> boot 7.10.3 -> boot 8.2.2 -> boot 8.4.4 -> boot 8.6.5 -> boot 8.8.2
 
 Why? To build GHC from source, it must be bootstrapped with an already working GHC, and
 each version comes with it own minimum version requirement, thus this path of bootstrapping.
 
-## Space Occupation:
+## Expected Space Occupation
 
 Minimum of **60GB** disk space is recommended for the `zones` pool of the **SmartOS**
 build machine (virtual or physical)
