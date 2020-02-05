@@ -393,11 +393,13 @@ For more information on how to configure your GHC build, see
 [root@hswander /build/ghc-7.10.3]#
 ```
 
-> The number to `-j` should corresponding to how many virtual CPUs
+> The number to `-j` should correspond to how many virtual CPUs
 > allocated to the build vm.
 
 ```bash
-[root@hswander /build/ghc-7.10.3]# gmake -j6
+[root@hswander /build/ghc-7.10.3]# gmake -j6 2>&1 | tee /build/log-7.10.3-make.txt
 + test -f mk/config.mk.old
++ cp -p mk/config.mk mk/config.mk.old
+ ...
 
 ```
